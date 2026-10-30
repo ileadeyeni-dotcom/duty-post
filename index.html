@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DutyPost</title>
+<meta name="theme-color" content="#142033">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DutyPost">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column for guards (thumb-first), tabbed console for admin. Navy ink + signal orange. */
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --sunk:#E3E8EE; --ink:#142033; --muted:#5B6676; --line:#D3DAE2;
+  --accent:#D9480F; --accent-ink:#FFFFFF; --navy:#142033; --navy-ink:#F2F5F8;
+  --ok:#2B8A3E; --ok-bg:#E3F3E6; --warn:#B35C00; --warn-bg:#FFF0D9; --bad:#C92A2A; --bad-bg:#FDE4E4;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D141E; --surface:#16202E; --sunk:#1D2939; --ink:#E6EBF1; --muted:#93A0B2; --line:#28364A;
+  --accent:#FF7A33; --accent-ink:#1A0B02; --navy:#0A1018; --navy-ink:#E6EBF1;
+  --ok:#5FD47A; --ok-bg:#163222; --warn:#FFB347; --warn-bg:#3A2A10; --bad:#FF7070; --bad-bg:#3D1717;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0D141E; --surface:#16202E; --sunk:#1D2939; --ink:#E6EBF1; --muted:#93A0B2; --line:#28364A;
+  --accent:#FF7A33; --accent-ink:#1A0B02; --navy:#0A1018; --navy-ink:#E6EBF1;
+  --ok:#5FD47A; --ok-bg:#163222; --warn:#FFB347; --warn-bg:#3A2A10; --bad:#FF7070; --bad-bg:#3D1717;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+img{max-width:100%}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display);letter-spacing:.01em;line-height:1.1;margin:0;text-wrap:balance}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--navy);color:var(--navy-ink);
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.mark{font-family:var(--f-display);font-weight:700;font-size:15px;background:var(--accent);color:#fff;padding:3px 7px;border-radius:5px;letter-spacing:.04em}
+.brand b{flex:none}
+@media (max-width:520px){.brand .client{display:none}}
+.brand .client{opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.login-hero .client-line{font-weight:600;opacity:.9;margin-top:4px}
+.brand b{font-family:var(--f-display);font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .link{background:none;border:0;color:var(--navy-ink);opacity:.8;font-size:13px;cursor:pointer;padding:6px}
+.tabs{position:sticky;top:calc(env(safe-area-inset-top,0px) + 50px);z-index:19;background:var(--navy);display:flex;gap:2px;overflow-x:auto;
+  padding:0 max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));scrollbar-width:none}
+.tabs button{background:none;border:0;color:var(--navy-ink);opacity:.65;padding:10px 12px 12px;font-weight:600;font-size:14px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-current="true"]{opacity:1;border-bottom-color:var(--accent)}
+.demo-bar .link{border:0;background:none;cursor:pointer;font:inherit}
+.row.wrapit > h2{white-space:nowrap;flex:1 0 auto}
+.demo-bar{background:var(--warn-bg);color:var(--warn);font-size:12.5px;font-weight:600;text-align:center;padding:6px 16px}
+
+.wrap{max-width:980px;margin:0 auto;padding-block:18px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.narrow{max-width:520px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.row{display:flex;align-items:center;gap:12px;min-width:0}
+.row.wrapit{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.stack{display:grid;gap:10px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:10px;padding:11px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;min-height:44px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.dark{background:var(--navy);color:var(--navy-ink)}
+.btn.sm{min-height:36px;padding:7px 12px;font-size:13.5px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+.big{font-family:var(--f-display);font-size:30px;font-weight:700;letter-spacing:.03em;min-height:84px;border-radius:16px;text-transform:uppercase}
+.big.out{background:transparent;color:var(--bad);border:2px solid var(--bad);font-size:22px;min-height:60px}
+
+/* forms */
+label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px}
+.req{color:var(--accent)}
+input,select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px 12px;min-height:44px}
+textarea{min-height:70px;resize:vertical}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.fgrid .full{grid-column:1/-1}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:12px}
+legend{font-family:var(--f-display);font-size:20px;font-weight:700;margin-bottom:10px;padding:0}
+.imgpick{display:flex;align-items:center;gap:12px}
+.imgpick img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.err{background:var(--bad-bg);color:var(--bad);border-radius:9px;padding:10px 12px;font-size:14px;overflow-wrap:anywhere}
+.err a{color:inherit}
+.note{background:var(--sunk);border-radius:9px;padding:10px 12px;font-size:13.5px;color:var(--muted)}
+
+/* id card */
+.idcard{display:flex;gap:14px;align-items:center}
+.av{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:var(--sunk);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--muted)}
+.av.lg{width:96px;height:96px;font-size:34px;border-radius:14px}
+.av.sm{width:40px;height:40px;font-size:15px}
+
+/* clock */
+.clock{display:grid;gap:14px;text-align:center}
+.ringwrap{position:relative;width:220px;height:220px;margin:4px auto}
+.ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ringwrap .mid{position:absolute;inset:0;display:grid;place-content:center;gap:2px}
+.cd{font-family:var(--f-mono);font-size:34px;font-variant-numeric:tabular-nums}
+.state-pill{justify-self:center}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:999px;white-space:nowrap}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.due{background:var(--warn-bg);color:var(--warn)}
+.chip.late{background:var(--bad-bg);color:var(--bad)} .chip.off{background:var(--sunk);color:var(--muted)}
+
+/* lists */
+.list{display:grid}
+.item{display:flex;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line);min-width:0}
+.item:first-child{border-top:0}
+.item.tap{cursor:pointer}
+.item .meta{flex:1;min-width:0}
+.item .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stripe{width:4px;align-self:stretch;border-radius:2px;flex:none}
+.stripe.ok{background:var(--ok)} .stripe.due{background:var(--warn)} .stripe.late{background:var(--bad)} .stripe.off{background:var(--line)}
+.ev{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px dashed var(--line);font-size:14px}
+.ev:first-child{border-top:0}
+.ev .t{font-family:var(--f-mono);width:78px;flex:none;white-space:nowrap}
+.ev a{color:var(--accent)}
+
+/* summary strip */
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tally div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tally b{display:block;font-family:var(--f-display);font-size:32px;line-height:1}
+.tally .late b{color:var(--bad)} .tally .due b{color:var(--warn)} .tally .ok b{color:var(--ok)}
+@media (max-width:460px){.tally{grid-template-columns:repeat(2,1fr)}}
+
+.shiftcard{display:grid;gap:8px}
+.flags{display:flex;gap:6px;flex-wrap:wrap}
+.evchips{display:flex;flex-wrap:wrap;gap:6px}
+.evchip{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);border:0;border-radius:7px;padding:5px 8px;cursor:pointer;color:var(--ink)}
+.evchip.in{background:var(--ok-bg);color:var(--ok)} .evchip.out{background:var(--bad-bg);color:var(--bad)}
+
+.kv{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere}
+.docs{display:flex;gap:10px;flex-wrap:wrap}
+.docs img{width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(8,12,18,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:92vh;overflow:auto;display:grid;gap:14px}
+@media (min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;width:100%;height:100%;min-height:0;opacity:0;cursor:pointer;padding:0;border:0}
+#cam{transform:scaleX(-1)}
+.selfie-prev{width:100%;max-height:300px;object-fit:contain;border-radius:12px;background:var(--sunk)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table.pay{border-collapse:collapse;width:100%;min-width:920px;font-size:14px}
+table.pay th,table.pay td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle;white-space:nowrap}
+table.pay th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--sunk)}
+table.pay th:first-child,table.pay td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;box-shadow:1px 0 0 var(--line)}
+table.pay th:first-child{background:var(--sunk)}
+table.pay td{font-variant-numeric:tabular-nums}
+table.pay tfoot td{font-weight:700;border-bottom:0;background:var(--sunk)}
+table.pay .net{font-weight:700}
+table.pay .bad{color:var(--bad)}
+@media (min-width:980px){.swipe{display:none}}
+.cellin{width:78px;min-height:34px;padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums;border-radius:7px}
+.sub{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
+details.rules summary{cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+details.rules summary::-webkit-details-marker{display:none}
+details.rules summary::after{content:"+";margin-left:auto;font-size:20px;color:var(--muted)}
+details.rules[open] summary::after{content:"–"}
+.check{display:flex;align-items:center;gap:10px;font-weight:500;color:var(--ink);font-size:14px}
+.check input{width:20px;min-height:20px;height:20px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:var(--navy-ink);padding:11px 18px;border-radius:10px;z-index:60;font-weight:600;max-width:90vw}
+.center{display:grid;place-items:center;min-height:60vh;text-align:center}
+.login-hero{background:var(--navy);color:var(--navy-ink);padding:calc(env(safe-area-inset-top,0px) + 40px) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.login-hero h1{font-size:40px;max-width:520px;margin:10px auto 0}
+.login-hero p{max-width:520px;margin:8px auto 0;opacity:.75}
+.login-hero .in{max-width:520px;margin:0 auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><p class="muted">Loading…</p></div></div>
+<div id="modal" class="modal" hidden></div>
+
+<script>
+window.addEventListener("error", function(e){ var a=document.getElementById("app"); if(a && /Loading/.test(a.textContent)) a.innerHTML='<div style="padding:24px;font:15px system-ui">The app could not start on this viewer: '+(e.message||"script error")+'. Open it in Chrome or Safari from its web link instead.</div>'; });
+setTimeout(function(){ var a=document.getElementById("app"); if(a && /Loading/.test(a.textContent)) a.innerHTML='<div style="padding:24px;font:15px system-ui;line-height:1.5"><b>This viewer can\'t run the app.</b><br>Phones usually won\'t run an app from a downloaded file. Open the online link in Chrome (Android) or Safari (iPhone).</div>'; }, 6000);
+</script>
+<script>
+/* =========================================================
+   1. SETTINGS — paste your Firebase config here (see README).
+   While it is null, the app runs in DEMO MODE with sample
+   data stored only on this phone.
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDvnmpK89rDxKsgDE0tujWlKfFhldGpsnY",
+  authDomain: "may23holds.firebaseapp.com",
+  projectId: "may23holds",
+  storageBucket: "may23holds.firebasestorage.app",
+  messagingSenderId: "606952519139",
+  appId: "1:606952519139:web:e3b811e90b13a43f3adcd6"
+};
+/* Example:
+const FIREBASE_CONFIG = {
+  apiKey: "AIza...", authDomain: "may23-guards.firebaseapp.com",
+  projectId: "may23-guards", appId: "1:123:web:abc"
+};
+*/
+const COMPANY = "May23 Security Services Ltd";
+const LOGIN_DOMAIN = "may23.dutypost.app";   // guards sign in with Staff ID; this is only used internally
+const CHECK_INTERVAL = 2 * 60 * 60 * 1000;           // 2 hours between check-ins
+const GRACE = 15 * 60 * 1000;                        // 15 min grace before "Overdue"
+const SHIFTS = { day:{label:"Day · 07:00–19:00",start:"07:00",end:"19:00"}, night:{label:"Night · 19:00–07:00",start:"19:00",end:"07:00"} };
+const NOW = "__NOW__";
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const fmtT = ms => ms ? new Date(ms).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "—";
+const fmtD = ms => ms ? new Date(ms).toLocaleDateString([], {weekday:"short", day:"numeric", month:"short"}) : "—";
+const fmtDur = ms => { const m = Math.round(Math.abs(ms) / 60000), h = Math.floor(m / 60); return h ? `${h}h ${pad(m % 60)}m` : `${m}m`; };
+const hms = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`; };
+const dayStart = d => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+const isoDay = ms => { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const mapsUrl = (lat, lng) => `https://www.google.com/maps?q=${lat},${lng}`;
+const toEmail = id => id.includes("@") ? id.trim() : id.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@" + LOGIN_DOMAIN;
+const initials = n => (n || "?").split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join("");
+const avatar = (g, cls = "") => g?.photo ? `<img class="av ${cls}" src="${g.photo}" alt="">` : `<div class="av ${cls}" aria-hidden="true">${esc(initials(g?.name))}</div>`;
+const linkify = s => esc(s).replace(/(https:\/\/[^\s)]+)/g, '<a href="$1" target="_blank" rel="noopener">open this link</a>');
+const toast = msg => { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 2800); };
+async function saveFile(name, blob){
+  try {
+    const d = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
+    if (d){ await d.save({filename:name, data:blob}); toast("Saved " + name); return; }
+  } catch (e) { if (e && e.code === "declined") return; if (e && e.code && !["unavailable","not_granted","capability_disabled","capability_removed"].includes(e.code)) { toast("Couldn't save the file: " + (e.message || e.code)); return; } }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+}
+function errMsg(e){
+  const c = e?.code || "";
+  if (c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Wrong Staff ID or PIN.";
+  if (c.includes("email-already-in-use")) return "That Staff ID or email already has a login.";
+  if (c.includes("weak-password")) return "PIN must be at least 6 digits.";
+  if (c.includes("permission-denied")) return "You don't have permission for this. Ask the admin to check your account.";
+  if (c.includes("network") || c.includes("unavailable")) return "No internet connection. Try again when you have network.";
+  return e?.message || String(e);
+}
+
+async function compress(file, max, q = 0.7, stamp){
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("Could not read that image.")); i.src = url; });
+  const s = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+  if (stamp){ const h = Math.max(18, Math.round(c.height * .07)); x.fillStyle = "rgba(0,0,0,.6)"; x.fillRect(0, c.height - h, c.width, h);
+    x.fillStyle = "#fff"; x.font = `${Math.round(h*.55)}px monospace`; x.fillText(stamp, 6, c.height - h*.3); }
+  URL.revokeObjectURL(url);
+  return c.toDataURL("image/jpeg", q);
+}
+function getLocation(){
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) return rej(new Error("This phone can't share location."));
+    navigator.geolocation.getCurrentPosition(
+      p => res({lat:+p.coords.latitude.toFixed(6), lng:+p.coords.longitude.toFixed(6), acc:Math.round(p.coords.accuracy)}),
+      e => rej(new Error(e.code === 1 ? "Location is blocked. Allow location for this app in your phone settings, then try again." : "Couldn't get your location. Move to an open area and try again.")),
+      {enableHighAccuracy:true, timeout:25000, maximumAge:0});
+  });
+}
+function expectedEnd(startMs, endHHMM){
+  if (!endHHMM) return null;
+  const [h, m] = endHHMM.split(":").map(Number), d = new Date(startMs); d.setHours(h, m, 0, 0);
+  if (d.getTime() <= startMs) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+function guardStatus(sh, now){
+  if (!sh?.active) return {key:"off", label:"Off duty"};
+  const due = (sh.lastCheckAt || sh.startedAt) + CHECK_INTERVAL;
+  if (now < due) return {key:"ok", label:"On post", due};
+  if (now < due + GRACE) return {key:"due", label:"Check-in due", due};
+  return {key:"late", label:"Overdue", due};
+}
+function missedChecks(times, endMs){ // times: sorted ms of in + checks
+  let missed = 0; const all = [...times, endMs];
+  for (let i = 1; i < all.length; i++){ const gap = all[i] - all[i-1]; if (gap > CHECK_INTERVAL + GRACE) missed += Math.floor((gap - GRACE) / CHECK_INTERVAL); }
+  return missed;
+}
+
+/* =========================================================
+   2. BACKENDS — Firebase (real) and Demo (this phone only).
+   Both expose the same functions.
+   ========================================================= */
+async function makeFirebase(cfg){
+  const B = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const [AP, A, F] = await Promise.all([import(B+"firebase-app.js"), import(B+"firebase-auth.js"), import(B+"firebase-firestore.js")]);
+  const app = AP.initializeApp(cfg), auth = A.getAuth(app), db = F.getFirestore(app);
+  const norm = s => { const o = {id:s.id, ...s.data()}; for (const k in o) if (o[k]?.toMillis) o[k] = o[k].toMillis(); return o; };
+  return {
+    demo:false,
+    onAuth: cb => A.onAuthStateChanged(auth, u => cb(u ? {uid:u.uid, email:u.email} : null)),
+    signIn: (id, pin) => A.signInWithEmailAndPassword(auth, toEmail(id), pin),
+    signOut: () => A.signOut(auth),
+    async firstAdmin(name, email, pw){
+      const c = await A.createUserWithEmailAndPassword(auth, email.trim(), pw);
+      const b = F.writeBatch(db);
+      b.set(F.doc(db, "users", c.user.uid), {role:"admin", name, loginId:email.trim(), createdAt:F.serverTimestamp()});
+      b.set(F.doc(db, "config", "setup"), {by:c.user.uid, at:F.serverTimestamp()});
+      await b.commit();
+    },
+    async createAccount(loginId, pin){ // uses a second app so the admin stays signed in
+      const sec = AP.initializeApp(cfg, "sec" + Date.now()), sa = A.getAuth(sec);
+      try { const c = await A.createUserWithEmailAndPassword(sa, toEmail(loginId), pin); return c.user.uid; }
+      finally { await A.signOut(sa).catch(()=>{}); await AP.deleteApp(sec).catch(()=>{}); }
+    },
+    async get(col, id){ const s = await F.getDoc(F.doc(db, col, id)); return s.exists() ? norm(s) : null; },
+    set: (col, id, data, o = {}) => F.setDoc(F.doc(db, col, id), data, {merge:!o.replace}),
+    async add(col, data){ const r = await F.addDoc(F.collection(db, col), data); return r.id; },
+    async list(col, {siteId, from, to, where} = {}){
+      const c = [];
+      if (siteId) c.push(F.where("siteId", "==", siteId));
+      if (where) c.push(F.where(where[0], "==", where[1]));
+      if (from != null) c.push(F.where("ts", ">=", F.Timestamp.fromMillis(from)), F.where("ts", "<", F.Timestamp.fromMillis(to)), F.orderBy("ts"));
+      const s = await F.getDocs(F.query(F.collection(db, col), ...c)); return s.docs.map(norm);
+    },
+    watch(col, {siteId} = {}, cb){   // live updates: only changed documents are read again
+      const c = siteId ? [F.where("siteId", "==", siteId)] : [];
+      return F.onSnapshot(F.query(F.collection(db, col), ...c), snap => cb(snap.docs.map(norm)), err => cb(null, err));
+    },
+    async clock(uid, ev, selfie, patch){
+      const S = F.serverTimestamp(), b = F.writeBatch(db);
+      const cref = F.doc(F.collection(db, "clocks")), sref = F.doc(F.collection(db, "selfies"));
+      b.set(sref, {guardUid:uid, siteId:ev.siteId, img:selfie, clockId:cref.id});
+      b.set(cref, {...ev, guardUid:uid, selfieId:sref.id, ts:S});
+      const p = {}; for (const [k, v] of Object.entries(patch)) p[k] = v === NOW ? S : v;
+      b.set(F.doc(db, "shifts", uid), p, {merge:true});
+      await b.commit();
+    }
+  };
+}
+
+function makeDemo(){
+  const KEY = "may23-guard-demo-v2"; let db, cb, cur = null; const clone = o => JSON.parse(JSON.stringify(o));
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch {} };
+  try { db = JSON.parse(localStorage.getItem(KEY)); } catch {}
+  if (!db){
+    const n = Date.now(), H = 3600e3, M = 60e3, A = {lat:6.2008, lng:6.7339}, W = {lat:5.5167, lng:5.7503};
+    const jig = (p, k) => ({lat:+(p.lat + k*0.0001).toFixed(6), lng:+(p.lng - k*0.0001).toFixed(6), acc:8 + k});
+    db = {accounts:{}, users:{}, guards:{}, sites:{}, shifts:{}, clocks:{}, selfies:{}, payinfo:{}, settings:{}, payruns:{}};
+    db.sites.s1 = {name:"Asaba Head Office", address:"Nnebisi Road, Asaba"};
+    db.sites.s2 = {name:"Warri Depot Gate", address:"Refinery Road, Ekpan, Warri"};
+    db.accounts["admin"] = {pin:"123456", uid:"u-admin"};
+    db.accounts["sup1"] = {pin:"123456", uid:"u-sup"};
+    db.users["u-admin"] = {role:"admin", name:"Demo Admin", loginId:"admin"};
+    db.users["u-sup"] = {role:"supervisor", name:"Sample Supervisor (Asaba)", loginId:"sup1", siteId:"s1"};
+    const gs = [
+      ["g1","MSS-0001","Chinedu Okafor","s1","day", A],
+      ["g2","MSS-0002","Emeka Nwosu","s1","day", A],
+      ["g3","MSS-0003","Blessing Edewor","s2","night", W],
+      ["g4","MSS-0004","Tunde Adeyemi","s2","day", W]];
+    for (const [uid, sid, name, site, shift] of gs){
+      db.accounts[sid.toLowerCase()] = {pin:"123456", uid};
+      db.users[uid] = {role:"guard", name, loginId:sid, siteId:site};
+      db.guards[uid] = {name, staffId:sid, siteId:site, shift, shiftStart:SHIFTS[shift].start, shiftEnd:SHIFTS[shift].end,
+        phone:"0803 000 00" + sid.slice(-2), address:"Sample address, Delta State", nin:"00000000" + sid.slice(-3), gender:"", rank:"Guard", status:"Active",
+        stateOrigin:"Delta", g1Name:"Sample Guarantor", g1Phone:"0805 000 0000", g1Occupation:"Trader", g1Rel:"Uncle", nokName:"Sample Next of Kin", nokPhone:"0806 000 0000", employed:isoDay(n - 200*24*H)};
+    }
+    const addEv = (uid, type, ts, loc, shiftId, extra = {}) => {
+      const id = "c" + Math.random().toString(36).slice(2, 9), g = db.guards[uid];
+      db.clocks[id] = {guardUid:uid, guardName:g.name, staffId:g.staffId, siteId:g.siteId, type, ts, shiftId, ...loc, ...extra};
+      return {type, ts, ...loc};
+    };
+    // g2: on post (checked 50 min ago)
+    let s = n - 4*H - 20*M; db.shifts.g2 = {active:true, shiftId:"g2-"+s, siteId:"s1", guardName:"Emeka Nwosu", staffId:"MSS-0002", startedAt:s, lastCheckAt:n - 50*M,
+      events:[addEv("g2","in",s,jig(A,1),"g2-"+s), addEv("g2","check",n-2*H-30*M,jig(A,2),"g2-"+s), addEv("g2","check",n-50*M,jig(A,1),"g2-"+s)]};
+    // g4: overdue (last check 2h50m ago)
+    s = n - 5*H; db.shifts.g4 = {active:true, shiftId:"g4-"+s, siteId:"s2", guardName:"Tunde Adeyemi", staffId:"MSS-0004", startedAt:s, lastCheckAt:n - 2*H - 50*M,
+      events:[addEv("g4","in",s,jig(W,1),"g4-"+s), addEv("g4","check",n-2*H-50*M,jig(W,3),"g4-"+s)]};
+    // g3: finished last night's shift but left 70 min early
+    s = dayStart(n) - 5*H - 2*M; const out = dayStart(n) + 5*H + 50*M;
+    for (const [t, ts] of [["in", s], ["check", s+2*H], ["check", s+4*H+5*M], ["check", s+8*H+40*M]]) addEv("g3", t, ts, jig(W,2), "g3-"+s);
+    addEv("g3", "out", out, jig(W,2), "g3-"+s, {earlyMins:70});
+    db.shifts.g3 = {active:false, shiftId:"g3-"+s, siteId:"s2", guardName:"Blessing Edewor", staffId:"MSS-0003", startedAt:s, endedAt:out, events:[]};
+    // ~5 weeks of past shifts so Attendance and Payroll have history
+    let seed = 20261028; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const hist = (uid, shift, loc, pr) => {
+      const [sh, sm] = SHIFTS[shift].start.split(":").map(Number);
+      for (let d = 34; d >= (shift === "night" ? 2 : 1); d--){
+        if (rnd() < pr.absent) continue;
+        const start = dayStart(n) - d*24*H + sh*H + sm*M + Math.floor(rnd()*20)*M - 10*M, sid = uid + "-" + start;
+        const expEnd = expectedEnd(start, SHIFTS[shift].end), early = rnd() < pr.early ? 30 + Math.floor(rnd()*90) : 0;
+        const outTs = expEnd - early*M + (early ? 0 : Math.floor(rnd()*10)*M);
+        addEv(uid, "in", start, jig(loc, 1), sid);
+        let last = start;
+        for (;;){ let t = last + 2*H - Math.floor(rnd()*12)*M; if (rnd() < pr.miss) t += 2*H; if (t >= outTs - 10*M) break; addEv(uid, "check", t, jig(loc, 2), sid); last = t; }
+        if (rnd() < pr.noOut) continue;
+        addEv(uid, "out", outTs, jig(loc, 1), sid, {earlyMins:early});
+      }
+    };
+    hist("g1", "day", A, {absent:.04, miss:.02, early:.03, noOut:0});
+    hist("g2", "day", A, {absent:.08, miss:.12, early:.06, noOut:.05});
+    hist("g3", "night", W, {absent:.1, miss:.06, early:.2, noOut:.04});
+    hist("g4", "day", W, {absent:.22, miss:.15, early:.1, noOut:.08});
+    db.payinfo.g1 = {payType:"Monthly salary", salary:"80000", bank:"Zenith Bank", accountNumber:"0000000011", accountName:"CHINEDU OKAFOR (SAMPLE)", sortCode:"000000001"};
+    db.payinfo.g2 = {payType:"Monthly salary", salary:"80000", bank:"Access Bank", accountNumber:"0000000022", accountName:"EMEKA NWOSU (SAMPLE)", sortCode:"000000002"};
+    db.payinfo.g3 = {payType:"Monthly salary", salary:"90000", bank:"First Bank", accountNumber:"0000000033", accountName:"BLESSING EDEWOR (SAMPLE)", sortCode:"000000003"};
+    db.payinfo.g4 = {payType:"Daily rate", dailyRate:"3500"};
+    save();
+  }
+  const fire = () => cb && cb(cur ? {uid:cur} : null);
+  const matches = (o, {siteId, from, to, where}) => (!siteId || o.siteId === siteId) && (!where || o[where[0]] === where[1]) && (from == null || (o.ts >= from && o.ts < to));
+  return {
+    demo:true,
+    onAuth(f){ cb = f; fire(); },
+    async signIn(id, pin){ const a = db.accounts[id.trim().toLowerCase()]; if (!a || a.pin !== pin) throw {code:"auth/invalid-credential"}; cur = a.uid; fire(); },
+    async signOut(){ cur = null; fire(); },
+    async firstAdmin(){ throw new Error("Not needed in demo mode."); },
+    async createAccount(loginId, pin){ const k = loginId.trim().toLowerCase(); if (db.accounts[k]) throw {code:"auth/email-already-in-use"};
+      const uid = "u" + Math.random().toString(36).slice(2, 10); db.accounts[k] = {pin, uid}; save(); return uid; },
+    async get(col, id){ const o = db[col]?.[id]; return o ? {id, ...clone(o)} : null; },
+    async set(col, id, data, o = {}){ db[col][id] = o.replace ? clone(data) : {...(db[col][id] || {}), ...clone(data)}; save(); },
+    async add(col, data){ const id = col[0] + Math.random().toString(36).slice(2, 9); db[col][id] = clone(data); save(); return id; },
+    watch(col, q, cb){ const f = () => this.list(col, q).then(r => cb(r)); f(); const t = setInterval(f, 5000); return () => clearInterval(t); },
+    async list(col, q = {}){ return Object.entries(db[col] || {}).map(([id, o]) => ({id, ...clone(o)})).filter(o => matches(o, q)).sort((a, b) => (a.ts||0) - (b.ts||0)); },
+    async clock(uid, ev, selfie, patch){
+      const t = Date.now(), cid = "c" + t, sid = "p" + t;
+      db.selfies[sid] = {guardUid:uid, siteId:ev.siteId, img:selfie, clockId:cid};
+      db.clocks[cid] = {...ev, guardUid:uid, selfieId:sid, ts:t};
+      const p = {}; for (const [k, v] of Object.entries(patch)) p[k] = v === NOW ? t : v;
+      db.shifts[uid] = {...(db.shifts[uid] || {}), ...p}; save();
+    },
+    reset(){ try { localStorage.removeItem(KEY); } catch {} location.reload(); }
+  };
+}
+
+/* =========================================================
+   3. APP
+   ========================================================= */
+let BE; const st = {tab:"live", siteFilter:"", day:isoDay(Date.now()), q:""};
+const app = $("#app");
+let timer = null, liveTimer = null;
+
+function shell(inner, {tabs} = {}){
+  const role = st.profile?.role;
+  return `<header class="top"><div class="brand"><span class="mark">DP</span><b>DutyPost</b><span class="small client">${esc(COMPANY)}</span></div>
+    ${st.user ? `<span class="small" style="opacity:.75">${esc(role === "guard" ? "" : role)}</span><button class="link" data-act="signout">Sign out</button>` : ""}</header>
+    ${tabs ? `<nav class="tabs" aria-label="Sections">${tabs}</nav>` : ""}
+    ${BE?.demo ? `<div class="demo-bar">Demo mode · sample data saved on this phone only · <button class="link" style="color:inherit;text-decoration:underline;padding:0" data-act="reset-demo">reset</button></div>` : ""}
+    ${inner}`;
+}
+function openModal(html){ const m = $("#modal"); m.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`; m.hidden = false; }
+function closeModal(){ try { st.stopCam?.(); } catch {} const m = $("#modal"); m.hidden = true; m.innerHTML = ""; }
+$("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+
+/* ---------- login ---------- */
+function renderLogin(err = ""){
+  stopTimers();
+  app.innerHTML = `<div class="login-hero"><div class="in"><span class="mark">DP</span>
+      <h1>DutyPost</h1><p class="client-line">${esc(COMPANY)}</p><p>Clock in, check in every 2 hours, clock out. Admins see every post live and run payroll from it.</p></div></div>
+    <main class="wrap narrow">
+      ${BE.demo ? `<div class="demo-bar" style="border-radius:9px">Demo mode: no Firebase connected yet. Try it with the sample accounts below.</div>` : ""}
+      <form class="card stack" id="loginForm">
+        <h2 style="font-size:24px">Sign in</h2>
+        <div><label for="lid">Staff ID or email</label><input id="lid" autocomplete="username" placeholder="MSS-0012" required></div>
+        <div><label for="lpin">PIN or password</label><input id="lpin" type="password" autocomplete="current-password" inputmode="numeric" required></div>
+        ${err ? `<div class="err">${esc(err)}</div>` : ""}
+        <button class="btn block" type="submit">Sign in</button>
+      </form>
+      ${BE.demo ? `<div class="card stack"><div class="eyebrow">Sample accounts · PIN 123456</div>
+        <div class="row wrapit"><button class="btn ghost sm" data-act="demo-login" data-id="admin">Admin</button>
+        <button class="btn ghost sm" data-act="demo-login" data-id="sup1">Supervisor (Asaba)</button>
+        <button class="btn ghost sm" data-act="demo-login" data-id="MSS-0001">Guard MSS-0001</button></div></div>`
+      : `<p class="small muted" style="text-align:center">Company owner setting up for the first time? <button class="link" style="color:var(--accent);background:none;border:0;cursor:pointer;font-weight:600" data-act="setup">Create the first admin</button></p>`}
+    </main>`;
+  $("#loginForm").addEventListener("submit", async e => {
+    e.preventDefault(); const b = e.submitter; b.disabled = true; b.textContent = "Signing in…";
+    try { await BE.signIn($("#lid").value, $("#lpin").value); } catch (x) { renderLogin(errMsg(x)); }
+  });
+}
+function renderSetup(err = ""){
+  app.innerHTML = shell(`<main class="wrap narrow"><form class="card stack" id="setupForm">
+    <h2 style="font-size:24px">Create the first admin</h2>
+    <p class="small muted">This works once. After it, only admins can add supervisors and guards.</p>
+    <div><label for="sname">Your full name</label><input id="sname" required></div>
+    <div><label for="semail">Email</label><input id="semail" type="email" required></div>
+    <div><label for="spw">Password (at least 8 characters)</label><input id="spw" type="password" minlength="8" required></div>
+    ${err ? `<div class="err">${esc(err)}</div>` : ""}
+    <button class="btn block" type="submit">Create admin</button>
+    <button class="btn ghost block" type="button" data-act="back-login">Back to sign in</button></form></main>`);
+  $("#setupForm").addEventListener("submit", async e => {
+    e.preventDefault(); e.submitter.disabled = true;
+    try { await BE.firstAdmin($("#sname").value.trim(), $("#semail").value, $("#spw").value); location.reload(); }
+    catch (x) { renderSetup(x?.code?.includes("permission") ? "An admin already exists. Ask them to create your account." : errMsg(x)); }
+  });
+}
+
+/* ---------- guard ---------- */
+async function loadGuard(){
+  const uid = st.user.uid;
+  [st.guard, st.shift] = await Promise.all([BE.get("guards", uid), BE.get("shifts", uid)]);
+  st.site = st.guard?.siteId ? await BE.get("sites", st.guard.siteId) : null;
+  renderGuard();
+}
+function renderGuard(){
+  stopTimers();
+  const g = st.guard, sh = st.shift, now = Date.now(), s = guardStatus(sh, now);
+  if (!g){ app.innerHTML = shell(`<main class="wrap narrow"><div class="card">Your guard record hasn't been set up yet. Contact the admin.</div></main>`); return; }
+  const shiftLabel = SHIFTS[g.shift]?.label || (g.shiftStart ? `Custom · ${g.shiftStart}–${g.shiftEnd}` : "");
+  const evs = (sh?.active ? sh.events || [] : []).slice().reverse();
+  const evLabel = {in:"Clocked in", check:"2-hour check-in", out:"Clocked out"};
+  const notifOn = "Notification" in window && Notification.permission === "granted";
+  app.innerHTML = shell(`<main class="wrap narrow">
+    <section class="card idcard">${avatar(g, "lg")}
+      <div class="grow"><h2 style="font-size:26px">${esc(g.name)}</h2>
+      <div class="mono small">${esc(g.staffId)}</div>
+      <div class="small muted">${esc(st.site?.name || "No site assigned")}${shiftLabel ? " · " + esc(shiftLabel) : ""}</div></div></section>
+    <section class="card clock">
+      ${!sh?.active ? `
+        <span class="chip off state-pill">Off duty</span>
+        <button class="btn big block" data-act="clock" data-type="in">Clock in</button>
+        <p class="small muted" style="margin:0">You'll take a selfie and the app records the time and your location.</p>
+        ${sh?.endedAt ? `<p class="small muted" style="margin:0">Last shift ended ${fmtD(sh.endedAt)} at ${fmtT(sh.endedAt)}.</p>` : ""}`
+      : `
+        <span class="chip ${s.key} state-pill" id="gchip">${s.label}</span>
+        <div class="ringwrap"><svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--sunk)" stroke-width="10"/>
+          <circle id="ring" cx="60" cy="60" r="52" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg>
+          <div class="mid"><span class="eyebrow" id="cdlab">Next check-in in</span><span class="cd" id="cd">--:--:--</span><span class="small muted">due ${fmtT(s.due)}</span></div></div>
+        <button class="btn big block" data-act="clock" data-type="check">Check in now</button>
+        <button class="btn big out block" data-act="clock" data-type="out">Clock out</button>
+        <p class="small muted" style="margin:0">On duty since ${fmtT(sh.startedAt)} · ${fmtD(sh.startedAt)}</p>`}
+    </section>
+    ${evs.length ? `<section class="card"><div class="eyebrow" style="margin-bottom:6px">This shift</div>
+      ${evs.map(e => `<div class="ev"><span class="t">${fmtT(e.ts)}</span><span class="grow">${evLabel[e.type]}</span>
+        ${e.lat ? `<a href="${mapsUrl(e.lat, e.lng)}" target="_blank" rel="noopener" class="small">map</a>` : ""}</div>`).join("")}</section>` : ""}
+    ${sh?.active && "Notification" in window && !notifOn ? `<section class="card row"><div class="grow small">Get a phone alert when your next check-in is due.</div><button class="btn dark sm" data-act="notif">Turn on alerts</button></section>` : ""}
+    ${sh?.active ? `<p class="note">Keep this app open on your phone during duty. Missed check-ins show in red on the admin's screen.</p>` : ""}
+  </main>`);
+  if (sh?.active){ tickGuard(); timer = setInterval(tickGuard, 1000); }
+}
+function tickGuard(){
+  const sh = st.shift; if (!sh?.active || !$("#cd")) return;
+  const now = Date.now(), last = sh.lastCheckAt || sh.startedAt, due = last + CHECK_INTERVAL, left = due - now;
+  const s = guardStatus(sh, now), color = s.key === "ok" ? "var(--ok)" : s.key === "due" ? "var(--warn)" : "var(--bad)";
+  $("#cd").textContent = hms(Math.abs(left));
+  $("#cdlab").textContent = left >= 0 ? "Next check-in in" : "Check-in overdue by";
+  const ring = $("#ring"); ring.setAttribute("stroke", color);
+  ring.setAttribute("stroke-dashoffset", (326.7 * (1 - Math.max(0, Math.min(1, left / CHECK_INTERVAL)))).toFixed(1));
+  const chip = $("#gchip"); chip.className = `chip ${s.key} state-pill`; chip.textContent = s.label;
+  if (left <= 0 && st.alerted !== due){ st.alerted = due; alertDue(); }
+}
+async function alertDue(){
+  try { navigator.vibrate?.([400, 200, 400, 200, 400]); } catch {}
+  try { if (Notification.permission === "granted"){ const r = await navigator.serviceWorker?.ready; const o = {body:"Your 2-hour check-in is due. Open DutyPost and tap Check in now.", tag:"checkin", renotify:true, icon:"icon-192.png"};
+    r ? r.showNotification("Check-in due", o) : new Notification("Check-in due", o); } } catch {}
+  toast("Your 2-hour check-in is due");
+}
+function clockFlow(type){
+  const titles = {in:"Clock in", check:"2-hour check-in", out:"Clock out"};
+  let loc = null, img = null, locErr = "";
+  openModal(`<h2 style="font-size:26px">${titles[type]}</h2>
+    <div class="row"><span class="eyebrow grow">Location</span><span class="small" id="locTxt">Getting your location…</span></div>
+    <div class="stack"><label>Selfie</label>
+      <div id="camBox" class="stack" hidden><video id="cam" class="selfie-prev" playsinline autoplay muted></video><button class="btn block" type="button" id="snap">Take selfie</button></div>
+      <img class="selfie-prev" id="sPrev" hidden alt="Your selfie">
+      <span class="btn ghost block filebtn" id="fileBox" style="color:var(--ink)">Open camera<input type="file" accept="image/*" capture="user" id="sIn" aria-label="Open camera for selfie"></span>
+      <button class="btn ghost sm" type="button" id="retake" hidden>Retake selfie</button>
+      ${BE.demo ? `<button class="link small" type="button" id="sampleSelfie" style="background:none;border:0;color:var(--accent);cursor:pointer;padding:4px 0">Camera won't open here? Use a sample selfie (demo only)</button>` : ""}</div>
+    <div class="err" id="cErr" hidden></div>
+    <button class="btn block ${type === "out" ? "dark" : ""}" id="cGo" disabled>Confirm ${titles[type].toLowerCase()}</button>
+    <button class="btn ghost block" data-act="close">Cancel</button>`);
+  const upd = () => { $("#cGo").disabled = !(loc && img); };
+  const showErr = m => { const e = $("#cErr"); e.textContent = m; e.hidden = !m; };
+  const fetchLoc = () => { $("#locTxt").textContent = "Getting your location…"; getLocation().then(l => { loc = l; $("#locTxt").innerHTML = `<span class="mono">${l.lat}, ${l.lng}</span> · ±${l.acc} m`; upd(); })
+    .catch(e => { if (BE.demo){ loc = {lat:6.2011, lng:6.7341, acc:15}; $("#locTxt").innerHTML = `<span class="mono">6.2011, 6.7341</span> · sample location (demo)`; upd(); return; } locErr = e.message; $("#locTxt").innerHTML = `<button class="btn sm ghost" id="locRetry">Retry</button>`; $("#locRetry").onclick = fetchLoc; showErr(locErr); }); };
+  fetchLoc();
+  let stream = null;
+  const stopCam = () => { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; };
+  st.stopCam = stopCam;
+  const setImg = async src => {
+    try { const stamp = `${st.guard.staffId} ${new Date().toLocaleString()}`; img = await compress(src, 360, 0.6, stamp);
+      const p = $("#sPrev"); p.src = img; p.hidden = false; $("#camBox").hidden = true; $("#fileBox").hidden = true; $("#retake").hidden = false; showErr(""); upd(); }
+    catch (x) { showErr(x.message); }
+  };
+  const startCam = async () => {
+    $("#sPrev").hidden = true; $("#retake").hidden = true;
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera api");
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user", width:{ideal:720}}, audio:false});
+      const v = $("#cam"); v.srcObject = stream; await v.play().catch(() => {});
+      $("#camBox").hidden = false; $("#fileBox").hidden = true;
+    } catch { stopCam(); $("#camBox").hidden = true; $("#fileBox").hidden = false; }
+  };
+  startCam();
+  $("#snap").addEventListener("click", async () => {
+    const v = $("#cam"); if (!v.videoWidth) { showErr("Camera is still starting. Wait a second and try again."); return; }
+    const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.9)); stopCam(); setImg(blob);
+  });
+  $("#sIn").addEventListener("change", e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    if (f.lastModified && Date.now() - f.lastModified > 10 * 60 * 1000) { showErr("Please take a new selfie now. Old photos from the gallery are not accepted."); return; }
+    setImg(f);
+  });
+  $("#retake").addEventListener("click", () => { img = null; upd(); startCam(); });
+  $("#sampleSelfie")?.addEventListener("click", async () => {
+    stopCam(); const c = document.createElement("canvas"); c.width = 360; c.height = 360; const x = c.getContext("2d");
+    x.fillStyle = "#8aa1b8"; x.fillRect(0, 0, 360, 360); x.fillStyle = "#e9eef3"; x.beginPath(); x.arc(180, 140, 62, 0, 7); x.fill(); x.beginPath(); x.ellipse(180, 330, 120, 100, 0, 0, 7); x.fill();
+    x.fillStyle = "#142033"; x.font = "bold 20px sans-serif"; x.textAlign = "center"; x.fillText("SAMPLE SELFIE", 180, 30);
+    setImg(await new Promise(r => c.toBlob(r, "image/jpeg", 0.9)));
+  });
+  $("#cGo").addEventListener("click", async () => {
+    const b = $("#cGo"); b.disabled = true; b.textContent = "Saving…";
+    try { await submitClock(type, loc, img); closeModal(); toast(type === "in" ? "Clocked in. Next check-in in 2 hours." : type === "out" ? "Clocked out. Well done today." : "Check-in recorded."); await loadGuard(); }
+    catch (x) { showErr(errMsg(x)); b.disabled = false; b.textContent = "Try again"; }
+  });
+}
+async function submitClock(type, loc, img){
+  const uid = st.user.uid, g = st.guard, sh = st.shift || {}, t = Date.now();
+  const shiftId = type === "in" ? `${uid}-${t}` : sh.shiftId;
+  const ev = {type, guardName:g.name, staffId:g.staffId, siteId:g.siteId || "", shiftId, lat:loc.lat, lng:loc.lng, acc:loc.acc, clientTs:t};
+  const e = {type, ts:t, lat:loc.lat, lng:loc.lng};
+  let patch;
+  if (type === "in") patch = {active:true, shiftId, siteId:ev.siteId, guardName:g.name, staffId:g.staffId, startedAt:NOW, lastCheckAt:NOW, endedAt:null, earlyMins:0, events:[e]};
+  else if (type === "check") patch = {lastCheckAt:NOW, events:[...(sh.events || []), e]};
+  else {
+    const end = expectedEnd(sh.startedAt, g.shiftEnd), early = end && t < end ? Math.round((end - t) / 60000) : 0;
+    ev.earlyMins = early; patch = {active:false, endedAt:NOW, earlyMins:early, events:[...(sh.events || []), e]};
+  }
+  await BE.clock(uid, ev, img, patch);
+}
+
+/* ---------- admin & supervisor ---------- */
+const isAdmin = () => st.profile?.role === "admin";
+const scope = () => isAdmin() ? undefined : st.profile.siteId;
+async function loadAdmin(){
+  st.sites = await BE.list("sites"); st.siteMap = Object.fromEntries(st.sites.map(s => [s.id, s]));
+  renderAdmin();
+}
+function renderAdmin(){
+  stopTimers();
+  const tabs = [["live","Live board"],["att","Attendance"],["guards","Guards"], ...(isAdmin() ? [["pay","Payroll"],["setup","Sites & staff"]] : [])]
+    .map(([k, l]) => `<button data-act="tab" data-tab="${k}" aria-current="${st.tab === k}">${l}</button>`).join("");
+  app.innerHTML = shell(`<main class="wrap" id="view"><p class="muted">Loading…</p></main>`, {tabs});
+  ({live:viewLive, att:viewAtt, guards:viewGuards, setup:viewSetup, pay:viewPay, guardForm:viewGuardForm, guard:viewGuard}[st.tab] || viewLive)()
+    .catch(e => { $("#view").innerHTML = `<div class="err">${linkify(errMsg(e))}</div>`; });
+}
+const siteName = id => st.siteMap?.[id]?.name || "No site";
+const siteFilterHTML = () => isAdmin() && st.sites.length ? `<select id="siteF" style="max-width:260px" aria-label="Filter by site"><option value="">All sites</option>${st.sites.map(s => `<option value="${s.id}" ${st.siteFilter === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>` : `<span class="small muted">${esc(siteName(st.profile.siteId))}</span>`;
+const bySite = arr => st.siteFilter ? arr.filter(o => o.siteId === st.siteFilter) : arr;
+
+async function viewLive(){
+  const guards = await BE.list("guards", {siteId:scope()});
+  await new Promise((res, rej) => {
+    let first = true;
+    st.unwatch = BE.watch("shifts", {siteId:scope()}, (shifts, err) => {
+      if (err){ if (first){ first = false; rej(err); } return; }
+      st.liveShifts = shifts;
+      if (st.tab === "live" && $("#view")) drawLive(guards);
+      if (first){ first = false; res(); }
+    });
+  });
+  liveTimer = setInterval(() => st.tab === "live" && $("#view") && drawLive(guards), 60000);   // recolour overdue guards without new reads
+}
+function drawLive(guards){
+  const shifts = st.liveShifts || [];
+  const shMap = Object.fromEntries(shifts.map(s => [s.id, s])), now = Date.now();
+  const rows = bySite(guards).filter(g => g.status !== "Left").map(g => ({g, sh:shMap[g.id], s:guardStatus(shMap[g.id], now)}));
+  const order = {late:0, due:1, ok:2, off:3}; rows.sort((a, b) => order[a.s.key] - order[b.s.key] || a.g.name.localeCompare(b.g.name));
+  const n = k => rows.filter(r => r.s.key === k).length;
+  $("#view").innerHTML = `
+    <div class="row wrapit"><h2 class="grow" style="font-size:28px">Live board</h2>${siteFilterHTML()}<button class="btn ghost sm" data-act="refresh">Refresh</button></div>
+    <div class="tally"><div class="ok"><b>${n("ok")}</b><span class="small">On post</span></div><div class="due"><b>${n("due")}</b><span class="small">Check-in due</span></div>
+      <div class="late"><b>${n("late")}</b><span class="small">Overdue</span></div><div><b>${n("off")}</b><span class="small">Off duty</span></div></div>
+    <section class="card list">${rows.length ? rows.map(({g, sh, s}) => `
+      <div class="item tap" data-act="open-guard" data-id="${g.id}"><span class="stripe ${s.key}"></span>${avatar(g, "sm")}
+        <div class="meta"><b>${esc(g.name)}</b><span class="small muted">${esc(g.staffId)} · ${esc(siteName(g.siteId))}</span>
+          ${sh?.active ? `<div class="small">In ${fmtT(sh.startedAt)} · last check ${fmtT(sh.lastCheckAt)} · ${s.key === "ok" ? "next due " + fmtT(s.due) : `<b style="color:var(--${s.key === "late" ? "bad" : "warn"})">late by ${fmtDur(now - s.due)}</b>`}</div>`
+          : sh?.endedAt ? `<div class="small muted">Last out ${fmtD(sh.endedAt)} ${fmtT(sh.endedAt)}${sh.earlyMins ? ` · <b style="color:var(--bad)">left ${fmtDur(sh.earlyMins*60000)} early</b>` : ""}</div>` : ""}</div>
+        <span class="chip ${s.key}">${s.label}</span></div>`).join("") : `<p class="muted">No guards yet. ${isAdmin() ? "Register your first guard in the Guards tab." : ""}</p>`}</section>
+    <p class="small muted">Updates by itself when a guard clocks in, checks in or clocks out. A guard turns red when a 2-hour check-in is more than 15 minutes late.</p>`;
+  bindSiteFilter();
+}
+function bindSiteFilter(){ $("#siteF")?.addEventListener("change", e => { st.siteFilter = e.target.value; renderAdmin(); }); }
+
+async function viewAtt(){
+  const from = dayStart(st.day + "T00:00"), to = from + 38 * 3600e3; // include night shifts that end next morning
+  const clocks = bySite(await BE.list("clocks", {siteId:scope(), from, to}));
+  const shifts = {};
+  for (const c of clocks){ if (!shifts[c.shiftId]) shifts[c.shiftId] = []; shifts[c.shiftId].push(c); }
+  const list = Object.values(shifts).map(evs => evs.sort((a, b) => a.ts - b.ts)).filter(evs => evs[0].type === "in" && evs[0].ts < from + 24 * 3600e3);
+  list.sort((a, b) => a[0].ts - b[0].ts);
+  st.attRows = clocks.filter(c => list.some(l => l[0].shiftId === c.shiftId));
+  const now = Date.now();
+  $("#view").innerHTML = `
+    <div class="row wrapit"><h2 class="grow" style="font-size:28px">Attendance</h2>
+      <input type="date" id="dayF" value="${st.day}" style="max-width:180px" aria-label="Date">${siteFilterHTML()}
+      <button class="btn ghost sm" data-act="csv" ${st.attRows.length ? "" : "disabled"}>Export CSV</button></div>
+    ${list.length ? list.map(evs => {
+      const first = evs[0], out = evs.find(e => e.type === "out"), checks = evs.filter(e => e.type !== "out").map(e => e.ts);
+      const missed = missedChecks(checks, out ? out.ts : now), early = out?.earlyMins || 0;
+      return `<section class="card shiftcard"><div class="row"><div class="grow"><b>${esc(first.guardName)}</b> <span class="mono small muted">${esc(first.staffId)}</span>
+          <div class="small muted">${esc(siteName(first.siteId))} · ${fmtT(first.ts)} – ${out ? fmtT(out.ts) : "still on duty"}${out ? ` · ${fmtDur(out.ts - first.ts)}` : ""}</div></div></div>
+        <div class="flags">${missed ? `<span class="chip late">${missed} missed check-in${missed > 1 ? "s" : ""}</span>` : `<span class="chip ok">All check-ins on time</span>`}
+          ${early ? `<span class="chip late">Left ${fmtDur(early * 60000)} early</span>` : ""}${!out ? `<span class="chip due">On duty</span>` : ""}</div>
+        <div class="evchips">${evs.map(e => `<button class="evchip ${e.type}" data-act="ev" data-id="${e.id}">${e.type === "in" ? "IN" : e.type === "out" ? "OUT" : "✓"} ${fmtT(e.ts)}</button>`).join("")}</div></section>`;
+    }).join("") : `<section class="card"><p class="muted" style="margin:0">No clock-ins on ${fmtD(from)}.</p></section>`}
+    <p class="small muted">Tap a time to see the selfie and location. A check-in is "missed" when more than 2 hours 15 minutes pass without one.</p>`;
+  $("#dayF").addEventListener("change", e => { st.day = e.target.value || isoDay(Date.now()); renderAdmin(); });
+  bindSiteFilter();
+}
+async function showEvent(id){
+  const c = st.attRows.find(r => r.id === id); if (!c) return;
+  const label = {in:"Clock in", check:"2-hour check-in", out:"Clock out"}[c.type];
+  openModal(`<div class="eyebrow">${esc(c.staffId)} · ${esc(siteName(c.siteId))}</div><h2 style="font-size:26px">${esc(c.guardName)}</h2>
+    <dl class="kv"><dt>Event</dt><dd>${label}</dd><dt>Time</dt><dd class="mono">${fmtD(c.ts)} · ${new Date(c.ts).toLocaleTimeString()}</dd>
+    <dt>Location</dt><dd><a href="${mapsUrl(c.lat, c.lng)}" target="_blank" rel="noopener" style="color:var(--accent)">${c.lat}, ${c.lng}</a> <span class="muted">±${c.acc} m</span></dd>
+    ${c.earlyMins ? `<dt>Left early</dt><dd style="color:var(--bad)">${fmtDur(c.earlyMins * 60000)}</dd>` : ""}</dl>
+    <div id="selfieBox" class="note">Loading selfie…</div><button class="btn ghost block" data-act="close">Close</button>`);
+  try { const s = c.selfieId ? await BE.get("selfies", c.selfieId) : null; $("#selfieBox").outerHTML = s?.img ? `<img class="selfie-prev" src="${s.img}" alt="Selfie at ${label}">` : `<div class="note">No selfie (sample data).</div>`; }
+  catch (e) { $("#selfieBox").textContent = errMsg(e); }
+}
+function exportCsv(){
+  const head = ["Date","Time","Guard","Staff ID","Site","Event","Latitude","Longitude","Accuracy (m)","Left early (min)","Map link"];
+  const rows = st.attRows.map(c => [isoDay(c.ts), new Date(c.ts).toLocaleTimeString(), c.guardName, c.staffId, siteName(c.siteId), c.type, c.lat, c.lng, c.acc, c.earlyMins || "", mapsUrl(c.lat, c.lng)]);
+  const csv = [head, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  saveFile(`attendance-${st.day}.csv`, new Blob([csv], {type:"text/csv"}));
+}
+
+/* ---------- guard records ---------- */
+const FORM = [
+  ["Personal details", [["photo","Passport photo","image"],["name","Full name","text",1],["staffId","Staff ID","text",1,"MSS-0012"],["phone","Phone number","tel",1],["phone2","Other phone","tel"],["email","Email","email"],
+    ["dob","Date of birth","date"],["gender","Gender","select",0,["","Male","Female"]],["marital","Marital status","select",0,["","Single","Married","Divorced","Widowed"]],
+    ["address","Home address","textarea",1],["stateOrigin","State of origin","text"],["lga","LGA","text"]]],
+  ["Identity", [["nin","NIN (11 digits)","nin",1],["ninSlip","NIN slip or ID card photo","image"]]],
+  ["Next of kin", [["nokName","Full name","text"],["nokRel","Relationship","text"],["nokPhone","Phone number","tel"],["nokAddress","Address","textarea"]]],
+  ["Guarantor 1", [["g1Name","Full name","text",1],["g1Phone","Phone number","tel",1],["g1Address","Home address","textarea"],["g1Occupation","Occupation","text"],["g1Work","Place of work","text"],["g1Rel","Relationship to guard","text"],["g1Id","Guarantor NIN or ID number","text"],["g1Photo","Guarantor photo","image"]]],
+  ["Guarantor 2", [["g2Name","Full name","text"],["g2Phone","Phone number","tel"],["g2Address","Home address","textarea"],["g2Occupation","Occupation","text"],["g2Work","Place of work","text"],["g2Rel","Relationship to guard","text"],["g2Id","Guarantor NIN or ID number","text"],["g2Photo","Guarantor photo","image"]]],
+  ["Posting", [["siteId","Site","site",1],["shift","Shift","shift",1],["rank","Rank","select",0,["Guard","Senior Guard","Supervisor","Head of Security"]],["employed","Date employed","date"],["status","Status","select",0,["Active","Suspended","Left"]]]],
+];
+const IMG_SIZE = {photo:480, ninSlip:1000, g1Photo:400, g2Photo:400};
+const BANKS = ["Access Bank","Citibank","Ecobank","Fidelity Bank","First Bank","FCMB","Globus Bank","GTBank","Jaiz Bank","Keystone Bank","Kuda","Lotus Bank","Moniepoint","OPay","PalmPay","Parallex Bank","Polaris Bank","PremiumTrust Bank","Providus Bank","Stanbic IBTC","Standard Chartered","Sterling Bank","SunTrust Bank","Titan Trust Bank","Union Bank","UBA","Unity Bank","Wema Bank","Zenith Bank","Other"];
+const PAY_FORM = [["payType","Pay type","select",0,["Monthly salary","Daily rate"]],["salary","Monthly salary (₦)","money"],["dailyRate","Daily rate (₦)","money"],
+  ["bank","Bank","bank"],["accountNumber","Account number (10 digits)","acct"],["accountName","Account name (as on the bank account)","text"],["sortCode","Sort code","text",0,"from the guard's bank"]];
+
+async function viewGuards(){
+  const guards = bySite(await BE.list("guards", {siteId:scope()})), q = st.q.toLowerCase();
+  const shown = guards.filter(g => !q || [g.name, g.staffId, g.phone, g.nin].some(v => (v || "").toLowerCase().includes(q))).sort((a, b) => a.name.localeCompare(b.name));
+  $("#view").innerHTML = `
+    <div class="row wrapit"><h2 class="grow" style="font-size:28px">Guards <span class="muted" style="font-size:20px">${guards.length}</span></h2>${siteFilterHTML()}
+      ${isAdmin() ? `<button class="btn sm" data-act="new-guard">Register guard</button>` : ""}</div>
+    <input id="gq" placeholder="Search name, staff ID, phone or NIN" value="${esc(st.q)}" aria-label="Search guards">
+    <section class="card list">${shown.length ? shown.map(g => `<div class="item tap" data-act="open-guard" data-id="${g.id}">${avatar(g, "sm")}
+      <div class="meta"><b>${esc(g.name)}</b><span class="small muted"><span class="mono">${esc(g.staffId)}</span> · ${esc(siteName(g.siteId))} · ${esc(g.phone || "")}</span></div>
+      ${g.status && g.status !== "Active" ? `<span class="chip late">${esc(g.status)}</span>` : ""}</div>`).join("") : `<p class="muted" style="margin:0">No guards found.</p>`}</section>`;
+  const gq = $("#gq"); gq.addEventListener("input", () => { st.q = gq.value; clearTimeout(st.qt); st.qt = setTimeout(() => { renderAdmin(); const n = $("#gq"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); });
+  bindSiteFilter();
+}
+async function viewGuard(){
+  const g = await BE.get("guards", st.openId); if (!g) { st.tab = "guards"; return renderAdmin(); }
+  const shiftLabel = SHIFTS[g.shift]?.label || (g.shiftStart ? `Custom · ${g.shiftStart}–${g.shiftEnd}` : "—");
+  const val = (k, t) => t === "site" ? siteName(g.siteId) : t === "shift" ? shiftLabel : (g[k] || "—");
+  const pay = isAdmin() ? (await BE.get("payinfo", g.id)) || {} : null;
+  const payRows = pay ? [["Pay type", pay.payType || "—"], pay.payType === "Daily rate" ? ["Daily rate", pay.dailyRate ? naira(num(pay.dailyRate)) : "—"] : ["Monthly salary", pay.salary ? naira(num(pay.salary)) : "—"],
+    ["Bank", pay.bank || "—"], ["Account number", pay.accountNumber || "—"], ["Account name", pay.accountName || "—"], ["Sort code", pay.sortCode || "—"]] : [];
+  $("#view").innerHTML = `
+    <div class="row"><button class="btn ghost sm" data-act="tab" data-tab="guards">← All guards</button><span class="grow"></span>
+      ${isAdmin() ? `<button class="btn sm" data-act="edit-guard" data-id="${g.id}">Edit</button>` : ""}</div>
+    <section class="card idcard">${avatar(g, "lg")}<div class="grow"><h2 style="font-size:28px">${esc(g.name)}</h2>
+      <div class="mono">${esc(g.staffId)}</div><div class="small muted">${esc(g.rank || "Guard")} · ${esc(siteName(g.siteId))} · ${esc(g.status || "Active")}</div></div></section>
+    ${FORM.map(([title, fields]) => {
+      const imgs = fields.filter(f => f[2] === "image" && f[0] !== "photo" && g[f[0]]), rest = fields.filter(f => f[2] !== "image");
+      return `<section class="card"><h3 style="font-size:20px;margin-bottom:10px">${title}</h3>
+        <dl class="kv">${rest.map(([k, l, t]) => `<dt>${esc(l)}</dt><dd class="${t === "nin" ? "mono" : ""}">${esc(val(k, t))}</dd>`).join("")}</dl>
+        ${imgs.length ? `<div class="docs" style="margin-top:12px">${imgs.map(([k, l]) => `<figure style="margin:0"><img src="${g[k]}" alt="${esc(l)}"><figcaption class="small muted">${esc(l)}</figcaption></figure>`).join("")}</div>` : ""}</section>`;
+    }).join("")}
+    ${pay ? `<section class="card"><h3 style="font-size:20px;margin-bottom:10px">Bank & pay <span class="small muted" style="font-family:var(--f-body);font-weight:400">admin only</span></h3>
+      <dl class="kv">${payRows.map(([l, v]) => `<dt>${esc(l)}</dt><dd class="${/number|code|salary|rate/i.test(l) ? "mono" : ""}">${esc(v)}</dd>`).join("")}</dl></section>` : ""}`;
+}
+let formImgs = {};
+function fieldHTML([k, label, type, req, opt], v, g){
+  const id = "f_" + k, lab = `<label for="${id}">${esc(label)}${req ? ' <b class="req">*</b>' : ""}</label>`;
+  switch (type){
+    case "image": return `<div>${lab}<div class="imgpick"><img id="${id}_p" ${v ? `src="${v}"` : "hidden"} alt=""><span class="btn ghost sm filebtn" style="color:var(--ink)">${v ? "Change" : "Add photo"}<input type="file" accept="image/*" id="${id}" data-img="${k}" aria-label="${esc(label)}"></span></div></div>`;
+    case "select": return `<div>${lab}<select id="${id}">${opt.map(o => `<option ${o === (v || "") ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
+    case "site": return `<div>${lab}<select id="${id}"><option value="">Choose site</option>${st.sites.map(s => `<option value="${s.id}" ${s.id === v ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>${st.sites.length ? "" : `<p class="small muted">Add a site first in Sites & staff.</p>`}</div>`;
+    case "shift": { const cur = g?.shift || "day"; return `<div>${lab}<select id="${id}">${Object.entries(SHIFTS).map(([sk, s]) => `<option value="${sk}" ${cur === sk ? "selected" : ""}>${s.label}</option>`).join("")}<option value="custom" ${cur === "custom" ? "selected" : ""}>Custom hours</option></select>
+      <div class="row" id="customHrs" style="margin-top:8px" ${cur === "custom" ? "" : "hidden"}><input type="time" id="f_shiftStart" value="${esc(g?.shiftStart || "08:00")}" aria-label="Shift start"><input type="time" id="f_shiftEnd" value="${esc(g?.shiftEnd || "17:00")}" aria-label="Shift end"></div></div>`; }
+    case "textarea": return `<div class="full">${lab}<textarea id="${id}">${esc(v)}</textarea></div>`;
+    case "money": return `<div>${lab}<input id="${id}" inputmode="decimal" class="mono" value="${esc(v)}" placeholder="0"></div>`;
+    case "acct": return `<div>${lab}<input id="${id}" inputmode="numeric" class="mono" maxlength="10" value="${esc(v)}"></div>`;
+    case "bank": return `<div>${lab}<select id="${id}"><option value="">Choose bank</option>${BANKS.map(b => `<option ${b === v ? "selected" : ""}>${esc(b)}</option>`).join("")}</select></div>`;
+    case "nin": return `<div>${lab}<input id="${id}" class="mono" inputmode="numeric" maxlength="11" value="${esc(v)}"></div>`;
+    default: return `<div>${lab}<input id="${id}" type="${type}" value="${esc(v)}" ${opt ? `placeholder="${esc(opt)}"` : ""}></div>`;
+  }
+}
+async function viewGuardForm(){
+  const g = st.openId ? await BE.get("guards", st.openId) : null, isNew = !g; formImgs = {};
+  const pay = (g ? await BE.get("payinfo", g.id) : null) || {};
+  $("#view").innerHTML = `
+    <div class="row"><button class="btn ghost sm" data-act="${isNew ? "tab" : "open-guard"}" data-tab="guards" data-id="${g?.id || ""}">← Cancel</button></div>
+    <h2 style="font-size:28px">${isNew ? "Register a new guard" : "Edit " + esc(g.name)}</h2>
+    <form id="gForm" class="stack" novalidate>
+      ${FORM.map(([t, fields]) => `<section class="card"><fieldset><legend>${t}</legend><div class="fgrid">${fields.map(f => fieldHTML(f, g?.[f[0]], g)).join("")}</div></fieldset></section>`).join("")}
+      <section class="card"><fieldset><legend>Bank & pay</legend><p class="small muted" style="margin:0 0 4px">Only admins can see this section. Used for payroll and the bank payment sheet.</p>
+        <div class="fgrid">${PAY_FORM.map(f => fieldHTML(f, pay[f[0]])).join("")}</div></fieldset></section>
+      ${isNew ? `<section class="card"><fieldset><legend>App login</legend><div class="fgrid">
+        <div><label>Login ID</label><p class="note" style="margin:0">The guard signs in with their Staff ID.</p></div>
+        <div><label for="f_pin">6-digit PIN <b class="req">*</b></label><input id="f_pin" class="mono" inputmode="numeric" maxlength="6" placeholder="e.g. 482915"></div></div>
+        <p class="small muted" style="margin:0">Give the guard their Staff ID and PIN privately. They install the app on their phone and sign in.</p></fieldset></section>` : ""}
+      <div class="err" id="gErr" hidden></div>
+      <button class="btn block" type="submit">${isNew ? "Register guard" : "Save changes"}</button>
+    </form>`;
+  $("#f_shift").addEventListener("change", e => { $("#customHrs").hidden = e.target.value !== "custom"; });
+  $$("[data-img]").forEach(inp => inp.addEventListener("change", async () => {
+    const k = inp.dataset.img, f = inp.files[0]; if (!f) return;
+    formImgs[k] = await compress(f, IMG_SIZE[k] || 600, 0.72); const p = $(`#f_${k}_p`); p.src = formImgs[k]; p.hidden = false;
+  }));
+  $("#gForm").addEventListener("submit", async e => {
+    e.preventDefault(); const err = $("#gErr"), b = e.submitter; err.hidden = true;
+    const data = {}, missing = [];
+    for (const [, fields] of FORM) for (const [k, l, t, req] of fields){
+      if (t === "image"){ const v = formImgs[k] ?? g?.[k]; if (v) data[k] = v; continue; }
+      if (t === "shift"){ const s = $("#f_shift").value; data.shift = s; data.shiftStart = s === "custom" ? $("#f_shiftStart").value : SHIFTS[s].start; data.shiftEnd = s === "custom" ? $("#f_shiftEnd").value : SHIFTS[s].end; continue; }
+      data[k] = $("#f_" + k).value.trim(); if (req && !data[k]) missing.push(l);
+    }
+    const payData = {}; for (const [k] of PAY_FORM) payData[k] = $("#f_" + k).value.trim();
+    payData.salary = payData.salary.replace(/[^0-9.]/g, ""); payData.dailyRate = payData.dailyRate.replace(/[^0-9.]/g, ""); payData.accountNumber = payData.accountNumber.replace(/\s/g, "");
+    if (payData.accountNumber && !/^\d{10}$/.test(payData.accountNumber)) return showE("Account number must be exactly 10 digits.");
+    const pin = isNew ? $("#f_pin").value.trim() : "";
+    if (missing.length) return showE(`Please fill in: ${missing.join(", ")}.`);
+    if (!/^\d{11}$/.test(data.nin)) return showE("NIN must be exactly 11 digits.");
+    if (isNew && !/^\d{6}$/.test(pin)) return showE("PIN must be exactly 6 digits.");
+    b.disabled = true; b.textContent = "Saving…";
+    try {
+      let uid = g?.id;
+      if (isNew){ uid = await BE.createAccount(data.staffId, pin); data.createdAt = Date.now(); }
+      await BE.set("guards", uid, data);
+      await BE.set("users", uid, {role:"guard", name:data.name, loginId:data.staffId, siteId:data.siteId});
+      await BE.set("payinfo", uid, payData);
+      toast(isNew ? `${data.name} registered` : "Changes saved"); st.openId = uid; st.tab = "guard"; renderAdmin();
+    } catch (x) { showE(errMsg(x)); b.disabled = false; b.textContent = "Try again"; }
+    function showE(m){ err.textContent = m; err.hidden = false; err.scrollIntoView({block:"center"}); }
+  });
+}
+
+/* ---------- payroll (admin) ---------- */
+const PAY_DEFAULTS = {expectedDays:26, missedFine:500, earlyDeduct:true, noOutRule:"half", narration:"May23 salary {month}"};
+const NO_OUT_RULES = {full:"Pay the full day", half:"Pay half the day", none:"Don't pay that day"};
+const num = v => { const x = parseFloat(String(v == null ? "" : v).replace(/[^0-9.]/g, "")); return isFinite(x) ? x : 0; };
+const r2 = v => Math.round(v * 100) / 100;
+const naira = v => { const x = r2(v); return "₦" + x.toLocaleString("en-NG", {minimumFractionDigits:Number.isInteger(x) ? 0 : 2, maximumFractionDigits:2}); };
+const monthRange = ym => { const [y, m] = ym.split("-").map(Number); return [new Date(y, m - 1, 1).getTime(), new Date(y, m, 1).getTime()]; };
+const monthLabel = ym => { const [y, m] = ym.split("-").map(Number); return new Date(y, m - 1, 1).toLocaleDateString("en-GB", {month:"long", year:"numeric"}); };
+function shiftHours(g){
+  if (!g.shiftStart || !g.shiftEnd) return 12;
+  const [a, b] = g.shiftStart.split(":").map(Number), [c, d] = g.shiftEnd.split(":").map(Number);
+  let m = (c * 60 + d) - (a * 60 + b); if (m <= 0) m += 1440; return m / 60;
+}
+/* Pure calculation: one row per guard for month `ym`, from their clock events. */
+function computePayroll(guards, pays, clocks, set, ym, edits, now){
+  const [from, to] = monthRange(ym), byG = {};
+  for (const c of clocks){ const g = byG[c.guardUid] || (byG[c.guardUid] = {}); (g[c.shiftId] || (g[c.shiftId] = [])).push(c); }
+  return guards.map(g => {
+    const p = pays[g.id] || {}, e = edits[g.id] || {}, hrs = shiftHours(g), days = new Set();
+    let missed = 0, earlyMins = 0, noOut = 0;
+    for (const raw of Object.values(byG[g.id] || {})){
+      const evs = raw.slice().sort((a, b) => a.ts - b.ts), first = evs[0];
+      if (first.type !== "in" || first.ts < from || first.ts >= to) continue;   // shift must start inside the month
+      days.add(isoDay(first.ts));
+      const out = evs.find(x => x.type === "out"), times = evs.filter(x => x.type !== "out").map(x => x.ts);
+      const end = out ? out.ts : Math.min(now, expectedEnd(first.ts, g.shiftEnd) || first.ts + hrs * 3600e3);
+      missed += missedChecks(times, end);
+      if (out) earlyMins += out.earlyMins || 0; else if (end < now) noOut++;
+    }
+    const daily = p.payType === "Daily rate", expected = num(set.expectedDays) || 26, worked = days.size;
+    const rate = daily ? num(p.dailyRate) : num(p.salary) / expected;
+    const noOutLoss = set.noOutRule === "half" ? noOut * 0.5 : set.noOutRule === "none" ? noOut : 0;
+    const daysPaid = Math.max(0, e.days !== undefined && e.days !== "" ? num(e.days) : worked - noOutLoss);
+    const base = daily ? rate * daysPaid : Math.min(num(p.salary), rate * daysPaid);
+    const missedDed = missed * num(set.missedFine), earlyDed = set.earlyDeduct ? (rate / hrs) * (earlyMins / 60) : 0;
+    const bonus = num(e.bonus), other = num(e.other);
+    const net = Math.max(0, r2(base + bonus - missedDed - earlyDed - other));
+    const acct = String(p.accountNumber || "");
+    return {uid:g.id, name:g.name, staffId:g.staffId, siteId:g.siteId, status:g.status || "Active", payType:daily ? "Daily rate" : "Monthly salary",
+      salary:num(p.salary), rate:r2(rate), expected, worked, daysPaid, overridden:e.days !== undefined && e.days !== "", absent:Math.max(0, expected - worked),
+      missed, earlyMins, noOut, base:r2(base), missedDed:r2(missedDed), earlyDed:r2(earlyDed), bonus, other, net,
+      bank:p.bank || "", accountNumber:acct, accountName:p.accountName || "", sortCode:p.sortCode || "",
+      hasRate:rate > 0, bankOk:/^\d{10}$/.test(acct) && !!p.bank && !!p.accountName, edit:e};
+  });
+}
+
+async function loadPayData(ym){
+  const [from, to] = monthRange(ym);
+  const [guards, pays, setDoc, run, clocks] = await Promise.all([BE.list("guards"), BE.list("payinfo"), BE.get("settings", "payroll"), BE.get("payruns", ym),
+    BE.list("clocks", {from, to:to + 14 * 3600e3})]);   // +14h catches night shifts ending after midnight
+  st.payData = {ym, guards, pays:Object.fromEntries(pays.map(p => [p.id, p])), set:{...PAY_DEFAULTS, ...(setDoc || {})}, run, clocks};
+  st.payEdits = st.payEdits || {};
+  if (!st.payEdits[ym]) st.payEdits[ym] = JSON.parse(JSON.stringify(run?.edits || {}));
+}
+async function viewPay(){
+  if (!st.payMonth) st.payMonth = isoDay(Date.now()).slice(0, 7);
+  if (!st.payData || st.payData.ym !== st.payMonth) await loadPayData(st.payMonth);
+  drawPay();
+}
+function drawPay(){
+  const {ym, guards, pays, set, run, clocks} = st.payData, edits = st.payEdits[ym];
+  const rows = computePayroll(guards, pays, clocks, set, ym, edits, Date.now())
+    .filter(r => r.status !== "Left" || r.worked > 0)
+    .sort((a, b) => siteName(a.siteId).localeCompare(siteName(b.siteId)) || a.name.localeCompare(b.name));
+  st.payCalc = {ym, rows, set};
+  const tot = k => r2(rows.reduce((s, r) => s + r[k], 0));
+  const ded = r2(tot("missedDed") + tot("earlyDed") + tot("other")), noBank = rows.filter(r => r.net > 0 && !r.bankOk).length, noRate = rows.filter(r => !r.hasRate).length;
+  const thisMonth = ym === isoDay(Date.now()).slice(0, 7);
+  $("#view").innerHTML = `
+    <h2 style="font-size:28px">Payroll</h2>
+    <div class="row"><input type="month" id="payM" value="${ym}" style="max-width:220px" aria-label="Pay month">
+      <button class="btn ghost sm" data-act="pay-refresh">Refresh</button></div>
+    <p class="small muted" style="margin:0">${monthLabel(ym)} · worked out from every guard's clock-ins, check-ins and clock-outs${thisMonth ? ". This month isn't over yet, so figures will change. Run it after the last day." : "."}</p>
+    ${run?.savedAt ? `<p class="note" style="margin:0">Saved ${fmtD(run.savedAt)} at ${fmtT(run.savedAt)}${run.savedBy ? " by " + esc(run.savedBy) : ""}. Edits after that aren't kept until you save again.</p>` : ""}
+    <div class="tally"><div><b>${rows.length}</b><span class="small">Guards</span></div>
+      <div class="ok"><b style="font-size:24px">${naira(tot("net"))}</b><span class="small">Total to pay</span></div>
+      <div class="due"><b style="font-size:24px">${naira(ded)}</b><span class="small">Deductions</span></div>
+      <div class="${noBank ? "late" : ""}"><b>${noBank}</b><span class="small">Missing bank details</span></div></div>
+    <details class="card rules" id="rulesBox"><summary>Pay rules <span class="small muted" style="font-weight:400">${set.expectedDays} days/month · ₦${num(set.missedFine).toLocaleString()} per missed check-in · early leave ${set.earlyDeduct ? "deducted" : "not deducted"}</span></summary>
+      <form id="rulesForm" class="fgrid" style="margin-top:14px">
+        <div><label for="r_exp">Working days in a month</label><input id="r_exp" inputmode="numeric" class="mono" value="${esc(set.expectedDays)}"><p class="small muted" style="margin:4px 0 0">Monthly salary ÷ this = one day's pay.</p></div>
+        <div><label for="r_fine">Deduction per missed check-in (₦)</label><input id="r_fine" inputmode="numeric" class="mono" value="${esc(set.missedFine)}"></div>
+        <div><label for="r_noout">Shift with no clock-out</label><select id="r_noout">${Object.entries(NO_OUT_RULES).map(([k, l]) => `<option value="${k}" ${set.noOutRule === k ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+        <div><label for="r_narr">Bank narration</label><input id="r_narr" value="${esc(set.narration)}"><p class="small muted" style="margin:4px 0 0">{month} becomes "${monthLabel(ym)}".</p></div>
+        <label class="check full"><input type="checkbox" id="r_early" ${set.earlyDeduct ? "checked" : ""}> Deduct pay for hours left early (hourly rate × hours missed)</label>
+        <div class="full"><button class="btn sm" type="submit">Save pay rules</button></div>
+      </form></details>
+    ${noRate ? `<div class="err">${noRate} guard${noRate > 1 ? "s have" : " has"} no salary or daily rate set, so they show ₦0. Open the guard and fill in Bank & pay.</div>` : ""}
+    <p class="small muted swipe" style="margin:0">Swipe the table sideways to see every column.</p>
+    <div class="tablewrap"><table class="pay">
+      <thead><tr><th>Guard</th><th>Days paid</th><th>Absent</th><th>Missed check-ins</th><th>Left early</th><th>Base pay</th><th>Deductions</th><th>Bonus (₦)</th><th>Other deduction (₦)</th><th>Net pay</th><th>Bank</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td><b>${esc(r.name)}</b><span class="sub mono">${esc(r.staffId)} · ${esc(siteName(r.siteId))}</span><span class="sub">${r.payType === "Daily rate" ? naira(r.rate) + "/day" : naira(r.salary) + "/month"}</span></td>
+        <td><input class="cellin mono" data-edit="days" data-uid="${r.uid}" inputmode="decimal" value="${esc(r.edit.days ?? "")}" placeholder="${r.daysPaid}" aria-label="Days paid for ${esc(r.name)}">
+          <span class="sub">${r.worked} worked${r.noOut ? ` · ${r.noOut} no clock-out` : ""}${r.overridden ? " · edited" : ""}</span></td>
+        <td class="${r.absent ? "bad" : ""}">${r.payType === "Daily rate" ? `<span class="muted">${r.absent}</span>` : r.absent}</td>
+        <td class="${r.missed ? "bad" : ""}">${r.missed}</td>
+        <td class="${r.earlyMins ? "bad" : ""}">${r.earlyMins ? fmtDur(r.earlyMins * 60000) : "0"}</td>
+        <td>${naira(r.base)}</td>
+        <td class="${r.missedDed + r.earlyDed + r.other ? "bad" : ""}">${naira(r.missedDed + r.earlyDed + r.other)}<span class="sub">missed ${naira(r.missedDed)} · early ${naira(r.earlyDed)}</span></td>
+        <td><input class="cellin mono" data-edit="bonus" data-uid="${r.uid}" inputmode="decimal" value="${esc(r.edit.bonus ?? "")}" placeholder="0" aria-label="Bonus for ${esc(r.name)}"></td>
+        <td><input class="cellin mono" data-edit="other" data-uid="${r.uid}" inputmode="decimal" value="${esc(r.edit.other ?? "")}" placeholder="0" aria-label="Other deduction for ${esc(r.name)}"></td>
+        <td class="net">${naira(r.net)}</td>
+        <td>${r.bankOk ? `<span class="chip ok">${esc(r.bank)}</span><span class="sub mono">${esc(r.accountNumber)}</span>` : `<button class="btn ghost sm" data-act="edit-guard" data-id="${r.uid}">Add bank details</button>`}</td>
+      </tr>`).join("") || `<tr><td colspan="11" class="muted">No guards yet.</td></tr>`}</tbody>
+      <tfoot><tr><td>Total · ${rows.length} guards</td><td></td><td></td><td>${tot("missed")}</td><td></td><td>${naira(tot("base"))}</td><td>${naira(ded)}</td><td>${naira(tot("bonus"))}</td><td></td><td>${naira(tot("net"))}</td><td></td></tr></tfoot>
+    </table></div>
+    <div class="row wrapit"><button class="btn" data-act="pay-xlsx" ${rows.length ? "" : "disabled"}>Download bank Excel sheet</button>
+      <button class="btn dark" data-act="pay-save" ${rows.length ? "" : "disabled"}>Save payroll</button></div>
+    ${noBank ? `<p class="small" style="color:var(--bad);margin:0">${noBank} guard${noBank > 1 ? "s are" : " is"} left out of the Bank Upload sheet until bank details are added. They still appear in Payroll Detail.</p>` : ""}
+    <p class="small muted">How it's worked out: a day counts when the guard clocked in. Monthly pay = salary ÷ working days × days paid, never more than the full salary. Daily pay = daily rate × days paid. Type in Days paid to override (for leave, public holidays or a sorted-out mistake). Always check the sheet before sending it to the bank.</p>`;
+  $("#payM").addEventListener("change", e => { if (e.target.value){ st.payMonth = e.target.value; st.payData = null; renderAdmin(); } });
+  $("#rulesForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const ns = {expectedDays:Math.max(1, Math.round(num($("#r_exp").value)) || 26), missedFine:num($("#r_fine").value), noOutRule:$("#r_noout").value, narration:$("#r_narr").value.trim() || PAY_DEFAULTS.narration, earlyDeduct:$("#r_early").checked};
+    try { await BE.set("settings", "payroll", ns); st.payData.set = {...PAY_DEFAULTS, ...ns}; toast("Pay rules saved"); drawPay(); $("#rulesBox").open = true; }
+    catch (x) { toast(errMsg(x)); }
+  });
+}
+document.addEventListener("change", e => {
+  const t = e.target; if (!t.matches?.("[data-edit]") || !st.payEdits) return;
+  const ym = st.payData.ym, row = st.payEdits[ym][t.dataset.uid] || (st.payEdits[ym][t.dataset.uid] = {});
+  const v = t.value.trim(); if (v === "") delete row[t.dataset.edit]; else row[t.dataset.edit] = String(num(v));
+  setTimeout(() => {   // redraw, then put focus back where the admin moved to
+    const a = document.activeElement, sel = a?.dataset?.edit ? `[data-edit="${a.dataset.edit}"][data-uid="${a.dataset.uid}"]` : null;
+    const y = window.scrollY, sx = $(".tablewrap")?.scrollLeft || 0; drawPay(); window.scrollTo(0, y);
+    const w = $(".tablewrap"); if (w) w.scrollLeft = sx; if (sel) $(sel)?.focus();
+  }, 0);
+});
+async function savePayroll(){
+  const {ym, rows, set} = st.payCalc;
+  const keep = ["uid","name","staffId","siteId","payType","salary","rate","expected","worked","daysPaid","absent","missed","earlyMins","noOut","base","missedDed","earlyDed","bonus","other","net","bank","accountNumber","accountName","sortCode"];
+  const data = {ym, edits:st.payEdits[ym], settings:set, total:r2(rows.reduce((s, r) => s + r.net, 0)), count:rows.length, savedAt:Date.now(), savedBy:st.profile?.name || "",
+    rows:rows.map(r => Object.fromEntries(keep.map(k => [k, r[k]])))};
+  try { await BE.set("payruns", ym, data, {replace:true}); st.payData.run = data; toast(`Payroll for ${monthLabel(ym)} saved`); drawPay(); }
+  catch (x) { toast(errMsg(x)); }
+}
+async function loadXLSX(){
+  if (window.XLSX) return window.XLSX;
+  await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload = res; sc.onerror = () => rej(new Error("Couldn't load the Excel tool. Check your internet and try again.")); document.head.append(sc); });
+  return window.XLSX;
+}
+async function exportPayroll(btn){
+  const {ym, rows, set} = st.payCalc, label = monthLabel(ym), narr = (set.narration || "").replace("{month}", label);
+  btn.disabled = true; const old = btn.textContent; btn.textContent = "Preparing…";
+  try {
+    const X = await loadXLSX(), money = "#,##0.00";
+    const fmt = (ws, cols, from) => { const rg = X.utils.decode_range(ws["!ref"]);
+      for (let R = from; R <= rg.e.r; R++) for (const C of cols){ const c = ws[X.utils.encode_cell({r:R, c:C})]; if (c && c.t === "n") c.z = money; } };
+    // 1. Bank Upload: one row per guard who has bank details and something to be paid
+    const pay = rows.filter(r => r.bankOk && r.net > 0);
+    const s1 = X.utils.aoa_to_sheet([["S/N","Account Number","Account Name","Bank","Sort Code","Amount","Narration"],
+      ...pay.map((r, i) => [i + 1, r.accountNumber, r.accountName, r.bank, r.sortCode, r.net, narr])]);
+    fmt(s1, [5], 1); s1["!cols"] = [{wch:5},{wch:15},{wch:32},{wch:20},{wch:13},{wch:14},{wch:30}];
+    // 2. Payroll Detail: full working for every guard
+    const head = ["Staff ID","Name","Site","Pay type","Monthly salary","Day rate","Working days","Days worked","No clock-out","Days paid","Absent days","Missed check-ins","Left early (hrs)","Base pay","Missed check-in deduction","Early leave deduction","Other deduction","Bonus","Net pay","Bank","Account Number","Account Name","Sort Code","Note"];
+    const s2 = X.utils.aoa_to_sheet([head, ...rows.map(r => [r.staffId, r.name, siteName(r.siteId), r.payType, r.payType === "Daily rate" ? "" : r.salary, r.rate, r.expected, r.worked, r.noOut, r.daysPaid, r.absent, r.missed, r2(r.earlyMins / 60),
+      r.base, r.missedDed, r.earlyDed, r.other, r.bonus, r.net, r.bank, r.accountNumber, r.accountName, r.sortCode,
+      [!r.bankOk && r.net > 0 ? "Missing bank details: not in Bank Upload" : "", !r.hasRate ? "No salary or rate set" : "", r.overridden ? "Days edited by admin" : ""].filter(Boolean).join("; ")]),
+      [], [...Array(12).fill(""), "Totals", ...["base","missedDed","earlyDed","other","bonus","net"].map(k => r2(rows.reduce((s, r) => s + r[k], 0)))]]);
+    fmt(s2, [4, 5, 13, 14, 15, 16, 17, 18], 1);
+    s2["!cols"] = head.map((h, i) => ({wch:[10,24,20,14][i] || Math.max(11, Math.min(h.length + 2, 22))}));
+    // 3. Summary
+    const total = r2(pay.reduce((s, r) => s + r.net, 0));
+    const s3 = X.utils.aoa_to_sheet([[COMPANY], ["Payroll for " + label], [],
+      ["Generated", new Date().toLocaleString("en-GB")], ["Guards on payroll", rows.length], ["Guards in bank upload", pay.length], ["Amount in bank upload", total],
+      ["Guards missing bank details", rows.filter(r => !r.bankOk && r.net > 0).length], ["Total deductions", r2(rows.reduce((s, r) => s + r.missedDed + r.earlyDed + r.other, 0))],
+      [], ["Pay rules used"], ["Working days in a month", set.expectedDays], ["Deduction per missed check-in", num(set.missedFine)], ["Early leave deducted", set.earlyDeduct ? "Yes" : "No"],
+      ["Shift with no clock-out", NO_OUT_RULES[set.noOutRule] || set.noOutRule], [], ["Prepared by", st.profile?.name || ""], ["Approved by", ""], ["Signature / date", ""]]);
+    for (const a of ["B7","B9","B13"]) if (s3[a]) s3[a].z = money;
+    s3["!cols"] = [{wch:32},{wch:26}];
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, s1, "Bank Upload"); X.utils.book_append_sheet(wb, s2, "Payroll Detail"); X.utils.book_append_sheet(wb, s3, "Summary");
+    const out = X.write(wb, {bookType:"xlsx", type:"array"});
+    await saveFile(`${COMPANY.split(" ")[0]}-payroll-${ym}.xlsx`, new Blob([out], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+  } catch (x) { toast(errMsg(x)); }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+
+/* ---------- sites & supervisors (admin) ---------- */
+async function viewSetup(){
+  const users = await BE.list("users"), sups = users.filter(u => u.role === "supervisor");
+  $("#view").innerHTML = `
+    <h2 style="font-size:28px">Sites & staff</h2>
+    <section class="card stack"><h3 style="font-size:20px">Sites</h3>
+      <div class="list">${st.sites.map(s => `<div class="item"><div class="meta"><b>${esc(s.name)}</b><span class="small muted">${esc(s.address || "")}</span></div></div>`).join("") || `<p class="muted" style="margin:0">No sites yet.</p>`}</div>
+      <form id="siteForm" class="fgrid"><div><label for="sn">Site name</label><input id="sn" required placeholder="e.g. Asaba Head Office"></div>
+        <div><label for="sa">Address</label><input id="sa" placeholder="Street, town"></div><div class="full"><button class="btn sm" type="submit">Add site</button></div></form></section>
+    <section class="card stack"><h3 style="font-size:20px">Supervisors</h3><p class="small muted" style="margin:0">Supervisors see the guards, live board and attendance for their own site only.</p>
+      <div class="list">${sups.map(u => `<div class="item"><div class="meta"><b>${esc(u.name)}</b><span class="small muted">Login: <span class="mono">${esc(u.loginId)}</span> · ${esc(siteName(u.siteId))}</span></div></div>`).join("") || `<p class="muted" style="margin:0">No supervisors yet.</p>`}</div>
+      <form id="supForm" class="fgrid"><div><label for="un">Full name</label><input id="un" required></div>
+        <div><label for="ul">Login ID</label><input id="ul" required placeholder="e.g. SUP-01"></div>
+        <div><label for="up">6-digit PIN</label><input id="up" class="mono" inputmode="numeric" maxlength="6" required></div>
+        <div><label for="us">Site</label><select id="us" required><option value="">Choose site</option>${st.sites.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select></div>
+        <div class="full"><div class="err" id="supErr" hidden></div><button class="btn sm" type="submit">Add supervisor</button></div></form></section>
+    <section class="card stack"><h3 style="font-size:20px">Install link for guards</h3>
+      <p class="small muted" style="margin:0">Send this link to each guard. On Android, open it in Chrome and tap <b>Install app</b>. On iPhone, open it in Safari, tap Share, then <b>Add to Home Screen</b>.</p>
+      <div class="row"><input readonly value="${esc(location.href.split("#")[0])}" id="shareUrl" class="mono small"><button class="btn ghost sm" data-act="copy">Copy</button></div></section>`;
+  $("#siteForm").addEventListener("submit", async e => { e.preventDefault(); await BE.add("sites", {name:$("#sn").value.trim(), address:$("#sa").value.trim()}); toast("Site added"); loadAdmin(); });
+  $("#supForm").addEventListener("submit", async e => {
+    e.preventDefault(); const pin = $("#up").value.trim(), er = $("#supErr");
+    if (!/^\d{6}$/.test(pin)) { er.textContent = "PIN must be exactly 6 digits."; er.hidden = false; return; }
+    if (!$("#us").value) { er.textContent = "Choose a site."; er.hidden = false; return; }
+    try { const uid = await BE.createAccount($("#ul").value, pin); await BE.set("users", uid, {role:"supervisor", name:$("#un").value.trim(), loginId:$("#ul").value.trim(), siteId:$("#us").value}); toast("Supervisor added"); loadAdmin(); }
+    catch (x) { er.textContent = errMsg(x); er.hidden = false; }
+  });
+}
+
+/* ---------- events ---------- */
+function stopTimers(){ clearInterval(timer); clearInterval(liveTimer); timer = liveTimer = null; if (st.unwatch){ try { st.unwatch(); } catch {} st.unwatch = null; } }
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-act]"); if (!t) return;
+  const a = t.dataset.act;
+  if (a === "signout"){ stopTimers(); await BE.signOut(); }
+  else if (a === "reset-demo") BE.reset();
+  else if (a === "demo-login"){ try { await BE.signIn(t.dataset.id, "123456"); } catch (x) { renderLogin(errMsg(x)); } }
+  else if (a === "setup") renderSetup();
+  else if (a === "back-login") renderLogin();
+  else if (a === "clock") clockFlow(t.dataset.type);
+  else if (a === "close") closeModal();
+  else if (a === "notif"){ try { const p = await Notification.requestPermission(); toast(p === "granted" ? "Alerts turned on" : "Alerts are blocked in phone settings"); } catch {} renderGuard(); }
+  else if (a === "tab"){ st.tab = t.dataset.tab; st.openId = null; if (st.tab === "pay") st.payData = null; renderAdmin(); }
+  else if (a === "refresh") renderAdmin();
+  else if (a === "open-guard"){ st.openId = t.dataset.id; st.tab = "guard"; renderAdmin(); }
+  else if (a === "new-guard"){ st.openId = null; st.tab = "guardForm"; renderAdmin(); }
+  else if (a === "edit-guard"){ st.openId = t.dataset.id; st.tab = "guardForm"; renderAdmin(); }
+  else if (a === "ev") showEvent(t.dataset.id);
+  else if (a === "csv") exportCsv();
+  else if (a === "pay-xlsx") exportPayroll(t);
+  else if (a === "pay-save") savePayroll();
+  else if (a === "pay-refresh"){ st.payData = null; renderAdmin(); }
+  else if (a === "copy"){ const i = $("#shareUrl"); try { await navigator.clipboard.writeText(i.value); toast("Link copied"); } catch { i.select(); } }
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden && st.profile?.role === "guard") tickGuard(); });
+
+/* ---------- boot ---------- */
+(async function boot(){
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  try { BE = FIREBASE_CONFIG ? await makeFirebase(FIREBASE_CONFIG) : makeDemo(); }
+  catch (e) { app.innerHTML = `<main class="wrap narrow"><div class="err">Couldn't connect. Check your internet and reload. (${esc(e.message)})</div></main>`; return; }
+  BE.onAuth(async u => {
+    st.user = u; st.profile = null; st.tab = "live"; st.siteFilter = ""; closeModal();
+    if (!u) return renderLogin();
+    try {
+      st.profile = await BE.get("users", u.uid);
+      if (!st.profile){ app.innerHTML = shell(`<main class="wrap narrow"><div class="card">This login isn't linked to a staff record yet. Ask the admin to set it up.</div></main>`); return; }
+      st.profile.role === "guard" ? await loadGuard() : await loadAdmin();
+    } catch (e) { app.innerHTML = shell(`<main class="wrap narrow"><div class="err">${linkify(errMsg(e))}</div></main>`); }
+  });
+})();
+</script>
+</body>
+</html>
